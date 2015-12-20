@@ -1,13 +1,15 @@
 #include <iostream>
 #include <queue>
 #include <algorithm>
+#include <cstdlib>
 
 class User {
   public:
     // Since in clasroom context, a user can have multiple teachers, we allow multiple mentors
     // for each user
-    unsigned int id;
+    unsigned int id;            // Unique id
     double version;
+    unsigned int infection_num;         // Random number assigned for each infection to prevent cycles
     std::vector<User*> master_list;   // A list of the user's mentors
     std::vector<User*> apprentice_list;  // A list of the user's pupils
 
@@ -16,7 +18,7 @@ class User {
     void totalInfection (double version_num);           // Infect all mentors and pupils connected this this user
   private:
     void upwardInfection (double version_num);          // Infect all masters
-    void downwardInfection(double version_num);        // Infect all pupils
+    void downwardInfection(double version_num);         // Infect all pupils
 
 };
 
@@ -30,10 +32,43 @@ User::User (double version_num) {
 }
 
 void User::totalInfection (double version_num) {
-    // Process self first
-    version = version_num;
-    upwardInfection(version_num);
-    downwardInfection(version_num);
+    unsigned int infection_num = rand();
+    // std::cout << "Infection num = " << infection_num << std::endl;
+    // std::cout << "RandommAX = " <<  RAND_MAX << std::endl;
+    std::queue<User*> bfs_queue;
+
+    // Add self first
+    bfs_queue.push(this);
+
+
+    // for (auto& apprentice_ptr : apprentice_list) {
+    //     bfs_queue.push(apprentice_ptr);
+    // }
+    // for (auto& master_ptr : master_list) {
+    //     bfs_queue.push(master_ptr);
+    // }
+
+    while (!bfs_queue.empty()) {
+        User* user_ptr = bfs_queue.front();
+        bfs_queue.pop();
+
+        // Process only the ones we haven't
+        if (user_ptr->infection_num != infection_num) {
+            user_ptr->version = version_num;
+            user_ptr->infection_num = infection_num;
+
+            // Add all immediate connections to the queue; apprentice first
+            for (auto& apprentice_ptr : user_ptr->apprentice_list) {
+                bfs_queue.push(apprentice_ptr);
+            }
+            for (auto& master_ptr : user_ptr->master_list) {
+                bfs_queue.push(master_ptr);
+            }
+        }
+    }
+
+    // upwardInfection(version_num);
+    // downwardInfection(version_num);
 }
 
 void User::upwardInfection (double version_num) {
@@ -94,10 +129,13 @@ int main (int argc, char *argv[]) {
     argc = argc;
     argv = argv;
 
+    srand (time(NULL));
+
     // Initialize
     std::vector<User> user_list;
     for (int i = 0; i < 100; ++i) {
         User user (0.0);
+        user.id = i;
         user_list.push_back(user);
     }
 
@@ -112,7 +150,6 @@ int main (int argc, char *argv[]) {
     }
 
     // Make connections
-
     for (int i = 0; i < 10; ++i) {
         make_connection(&(user_list[10]), &(user_list[i]));
     }
@@ -122,7 +159,7 @@ int main (int argc, char *argv[]) {
     }
 
     // Do infection
-    user_list[10].totalInfection(1.0);
+    user_list[20].totalInfection(1.0);
 
     // Check
     printf("Final\n");

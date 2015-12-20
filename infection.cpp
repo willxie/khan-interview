@@ -6,6 +6,7 @@ class User {
   public:
     // Since in clasroom context, a user can have multiple teachers, we allow multiple mentors
     // for each user
+    unsigned int id;
     double version;
     std::vector<User*> master_list;   // A list of the user's mentors
     std::vector<User*> apprentice_list;  // A list of the user's pupils
@@ -47,12 +48,11 @@ void User::upwardInfection (double version_num) {
         bfs_queue.pop();
         user_ptr->version = version_num;
         // Add all mentors to the list
-        for (auto& master_ptr : master_list) {
+        for (auto& master_ptr : user_ptr->master_list) {
+            std::cout << "." << std::endl;
             bfs_queue.push(master_ptr);
         }
-
     }
-
 }
 
 void make_connection (User* master_ptr, User* apprentice_ptr) {
@@ -84,12 +84,8 @@ int main (int argc, char *argv[]) {
         user_list.push_back(user);
     }
 
-    // Make connections
-    for (int i = 10; i < 20; ++i) {
-        make_connection(&(user_list[i]), &(user_list[0]));
-    }
-
     // Check
+    printf("Init:\n");
     for (int i = 0; i < 100; i += 10) {
         for (int j = 0; j < 10; ++j) {
             printf("%.1f   ", user_list[i + j].version);
@@ -98,4 +94,22 @@ int main (int argc, char *argv[]) {
         printf("\n");
     }
 
+    // Make connections
+    for (int i = 10; i < 20; ++i) {
+        make_connection(&(user_list[i]), &(user_list[0]));
+    }
+
+    // Do infection
+    user_list[0].totalInfection(2.0);
+
+    // Check
+    printf("Final\n");
+    for (int i = 0; i < 100; i += 10) {
+        for (int j = 0; j < 10; ++j) {
+            printf("%.1f   ", user_list[i + j].version);
+        }
+        printf("\n");
+        printf("\n");
+    }
+    printf("==============================\n")
 }

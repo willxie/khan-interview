@@ -16,6 +16,7 @@ class User {
     User ();                         // Constructors
     User (double version_num);
     void totalInfection (double version_num);           // Infect all mentors and pupils connected this this user
+    void limitedInfection (double version_num, int num_users);  // Infect a set number of users
   private:
     void upwardInfection (double version_num);          // Infect all masters
     void downwardInfection(double version_num);         // Infect all pupils
@@ -28,25 +29,30 @@ User::User () {
 
 User::User (double version_num) {
     version = version_num;
-    // printf("Hello %f", version);
 }
 
 void User::totalInfection (double version_num) {
-    unsigned int infection_num = rand();
-    // std::cout << "Infection num = " << infection_num << std::endl;
-    // std::cout << "RandommAX = " <<  RAND_MAX << std::endl;
+    limitedInfection(version_num, -1);
+}
+
+// Negative num_users means infect everybody
+void User::limitedInfection (double version_num, int num_users) {
     std::queue<User*> bfs_queue;
+
+    // Random number used for this infection session
+    unsigned int infection_num = rand();
+
+    // Initialize number of users
+    bool num_users_infinite = false; // If true, this session infects all connected users
+    int num_users_left = 0;
+    if (num_users < 0) {
+        num_users_infinite = true;
+    } else {
+        num_users_left = num_users;
+    }
 
     // Add self first
     bfs_queue.push(this);
-
-
-    // for (auto& apprentice_ptr : apprentice_list) {
-    //     bfs_queue.push(apprentice_ptr);
-    // }
-    // for (auto& master_ptr : master_list) {
-    //     bfs_queue.push(master_ptr);
-    // }
 
     while (!bfs_queue.empty()) {
         User* user_ptr = bfs_queue.front();
@@ -54,8 +60,15 @@ void User::totalInfection (double version_num) {
 
         // Process only the ones we haven't
         if (user_ptr->infection_num != infection_num) {
+            // Return if exceeded number of infected users
+            if (num_users_left == 0 && (!num_users_infinite)) {
+                return;
+            }
+
             user_ptr->version = version_num;
             user_ptr->infection_num = infection_num;
+
+            num_users_left--;
 
             // Add all immediate connections to the queue; apprentice first
             for (auto& apprentice_ptr : user_ptr->apprentice_list) {
@@ -66,9 +79,6 @@ void User::totalInfection (double version_num) {
             }
         }
     }
-
-    // upwardInfection(version_num);
-    // downwardInfection(version_num);
 }
 
 void User::upwardInfection (double version_num) {
@@ -159,7 +169,7 @@ int main (int argc, char *argv[]) {
     }
 
     // Do infection
-    user_list[20].totalInfection(1.0);
+    user_list[10].limitedInfection(1.0, 15);
 
     // Check
     printf("Final\n");

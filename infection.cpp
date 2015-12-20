@@ -14,21 +14,16 @@ class User {
     std::vector<User*> master_list;   // A list of the user's mentors
     std::vector<User*> apprentice_list;  // A list of the user's pupils
 
-    User ();                         // Constructors
     User (double version_num);
     void totalInfection (double version_num);           // Infect all mentors and pupils connected this this user
     void limitedInfection (double version_num, int num_users);  // Infect a set number of users
     void limitedInfectionBounded (double version_num, int num_users); // Infect a set number of users; a master and its pupils have the same version during processing
 
   private:
+    // Optional
     void upwardInfection (double version_num);          // Infect all masters
     void downwardInfection(double version_num);         // Infect all pupils
-
 };
-
-User::User () {
-    User (1.0);
-}
 
 User::User (double version_num) {
     version = version_num;
@@ -208,6 +203,7 @@ int main (int argc, char *argv[]) {
 
     srand (time(NULL));
 
+    // This is a simple test case. Feel free to change the graph and parameters.
     // Initialize
     std::vector<User> user_list;
     for (int i = 0; i < 100; ++i) {

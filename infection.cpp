@@ -6,9 +6,10 @@ class User {
   public:
     // Since in clasroom context, a user can have multiple teachers, we allow multiple mentors
     // for each user
+    double version;
     std::vector<User*> master_list;   // A list of the user's mentors
     std::vector<User*> apprentice_list;  // A list of the user's pupils
-    double version;
+
     User ();                         // Constructors
     User (double version_num);
     void totalInfection (double version_num);           // Infect all mentors and pupils connected this this user
@@ -24,6 +25,7 @@ User::User () {
 
 User::User (double version_num) {
     version = version_num;
+    // printf("Hello %f", version);
 }
 
 void User::totalInfection (double version_num) {
@@ -78,7 +80,7 @@ int main (int argc, char *argv[]) {
     // Initialize
     std::vector<User> user_list;
     for (int i = 0; i < 100; ++i) {
-        User user;
+        User user (1.0);
         user_list.push_back(user);
     }
 

@@ -2,6 +2,7 @@
 #include <queue>
 #include <algorithm>
 #include <cstdlib>
+#include <cassert>
 
 class User {
   public:
@@ -17,6 +18,8 @@ class User {
     User (double version_num);
     void totalInfection (double version_num);           // Infect all mentors and pupils connected this this user
     void limitedInfection (double version_num, int num_users);  // Infect a set number of users
+    void limitedInfectionBounded (double version_num, int num_users); // Infect a set number of users; a master and its pupils have the same version during processing
+
   private:
     void upwardInfection (double version_num);          // Infect all masters
     void downwardInfection(double version_num);         // Infect all pupils
@@ -36,6 +39,8 @@ void User::totalInfection (double version_num) {
 }
 
 // Negative num_users means infect everybody
+// This version infects everybody until to the num_users bound. It will try to infect pupils
+// first and then connected mentors in a BFS fashion
 void User::limitedInfection (double version_num, int num_users) {
     std::queue<User*> bfs_queue;
 
@@ -76,6 +81,68 @@ void User::limitedInfection (double version_num, int num_users) {
             }
             for (auto& master_ptr : user_ptr->master_list) {
                 bfs_queue.push(master_ptr);
+            }
+        }
+    }
+}
+
+// This version infects the number of users <= num_users. It provides the guarantee that
+// all mentors and pupils in range are infected together or not at call
+void User::limitedInfectionBounded (double version_num, int num_users) {
+    // This version does not take negative users
+    assert(num_users >= 0);
+
+    std::queue<User*> bfs_queue, master_queue;
+
+    // Random number used for this infection session
+    unsigned int infection_num = rand();
+
+    // Initialize number of users
+    unsigned int num_users_left = num_users;
+
+    // Add self first
+    master_queue.push(this);
+
+    while (!master_queue.empty()) {
+        User* master_ptr = master_queue.front();
+        master_queue.pop();
+
+        // Check if this node has been visisted already
+        if (master_ptr->infection_num == infection_num) {
+            continue;
+        }
+
+        // Look ahead ot make sure that we have room for it.
+        if (!(master_ptr->apprentice_list.size() + 1 <= num_users_left)) {
+            continue;
+        }
+
+        // Add the master and all its pupils to the process list
+        bfs_queue.push(master_ptr);
+        for (auto& apprentice : master_ptr->apprentice_list) {
+            bfs_queue.push(apprentice);
+        }
+
+        // Process everybody in the current process queue
+        while (!bfs_queue.empty()) {
+            User* user_ptr = bfs_queue.front();
+            bfs_queue.pop();
+
+            // Process only the ones we haven't
+            if (user_ptr->infection_num != infection_num) {
+                user_ptr->version = version_num;
+                user_ptr->infection_num = infection_num;
+
+                num_users_left--;
+
+                // Add all immediate connections to the master queue
+                for (auto& apprentice_ptr : user_ptr->apprentice_list) {
+                    master_queue.push(apprentice_ptr);
+                }
+                for (auto& master_ptr : user_ptr->master_list) {
+                    master_queue.push(master_ptr);
+                }
+
             }
         }
     }
@@ -168,11 +235,16 @@ int main (int argc, char *argv[]) {
         make_connection(&(user_list[i]), &(user_list[10]));
     }
 
+    for (int i = 10; i < 20; ++i) {
+        make_connection(&(user_list[20]), &(user_list[i]));
+    }
+
     // Do infection
-    user_list[10].limitedInfection(1.0, 15);
+    // user_list[10].limitedInfection(1.0, 15);
+    user_list[10].limitedInfectionBounded(1.0, 19);
 
     // Check
-    printf("Final\n");
+    printf("Final:\n");
     for (int i = 0; i < 100; i += 10) {
         for (int j = 0; j < 10; ++j) {
             printf("%.1f   ", user_list[i + j].version);

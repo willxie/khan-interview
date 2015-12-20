@@ -1,3 +1,5 @@
+Specification is in `spec.txt`
+
 To compile:
 
 ```
